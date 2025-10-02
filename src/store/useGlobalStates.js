@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export const useGlobalAmount = create((set) => ({
+export const useGlobalStore = create((set) => ({
   contract: {
     FACTORY_CONTRACT:null,
     TOKEN_CONTRACT:null,

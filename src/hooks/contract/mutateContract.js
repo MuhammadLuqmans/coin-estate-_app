@@ -1,4 +1,4 @@
-import { useGlobalStates } from '@/store/useGlobalStates';
+import { useGlobalStore } from '@/store/useGlobalStates';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import { useAccount } from 'wagmi';
@@ -12,7 +12,7 @@ import { CHAIN_ID } from '@/contract';
 // purchaseWMP (0x74724ce8)
 export const useMutateCreateERC884ProPerty = (onSuccess) => {
   const { address } = useAccount();
-  const { FACTORY_CONTRACT, TOKEN_CONTRACT } = useGlobalStates((state) => state.contract);
+  const { FACTORY_CONTRACT, TOKEN_CONTRACT } = useGlobalStore((state) => state.contract);
 
   const mutationFn = async ({ name, symbols }) => {
     const tx = await FACTORY_CONTRACT.createERC884(name, symbols);
@@ -39,7 +39,8 @@ export const useMutateMint = (onSuccess) => {
   const { data: user } = useQueryGetUser();
   const signer = useEthersSigner(CHAIN_ID);
 
-  const { FACTORY_CONTRACT } = useGlobalStates((state) => state.contract);
+  const {  contract } = useGlobalStore();
+  const { FACTORY_CONTRACT } = contract;
 
   const mutationFn = async ({ tokenAddress, amount }) => {
     const tokenValues = ethers.utils.parseEther(`${amount}`);
