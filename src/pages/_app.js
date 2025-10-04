@@ -1,13 +1,13 @@
 import AuthProvider, { wagmiAdapter } from '@/context/Provider';
 import '@/styles/globals.css';
-import { arbitrum, bscTestnet, mainnet, polygonAmoy } from '@reown/appkit/networks';
+import { bscTestnet, mainnet } from '@reown/appkit/networks';
 import { createAppKit } from '@reown/appkit/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createContext, useEffect, useState } from 'react';
+import 'react-phone-input-2/lib/style.css';
 import 'react-quill-new/dist/quill.snow.css'; // Or 'quill.bubble.css'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import 'react-phone-input-2/lib/style.css';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -32,7 +32,7 @@ const metadata = {
 const modal = createAppKit({
   adapters: [wagmiAdapter],
   projectId,
-  networks: [bscTestnet, polygonAmoy],
+  networks: [bscTestnet],
   defaultNetwork: mainnet,
   metadata: metadata,
   features: {

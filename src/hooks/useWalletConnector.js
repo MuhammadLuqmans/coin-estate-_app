@@ -1,5 +1,5 @@
 import { CHAIN_ID, FactoryAbi, factoryAddress, tokenAbi, tokenAddress } from '@/contract';
-import { useGlobalStates } from '@/store/useGlobalStates';
+import { useGlobalAmount } from '@/store/useGlobalStates';
 import { ethers } from 'ethers';
 import { useCallback } from 'react';
 import { useAccount } from 'wagmi';
@@ -8,7 +8,7 @@ import { useEthersSigner } from './ethers';
 const useWalletConnector = () => {
   const { address: account, chainId } = useAccount();
   const signer = useEthersSigner(CHAIN_ID)
-  const setContactDetails = useGlobalStates((state) => state.setContactDetails);
+  const setContactDetails = useGlobalAmount((state) => state.setContactDetails);
   // eip155:97
   // const provider = useProvider();
 
@@ -19,6 +19,7 @@ const useWalletConnector = () => {
       if (account && isChainId) {
         const TOKEN_CONTRACT = new ethers.Contract(tokenAddress, tokenAbi, signer);
         const FACTORY_CONTRACT = new ethers.Contract(factoryAddress, FactoryAbi, signer);
+        console.log({FACTORY_CONTRACT})
         setContactDetails({
           FACTORY_CONTRACT,
           TOKEN_CONTRACT,

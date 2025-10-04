@@ -1,27 +1,30 @@
-import { useGlobalStates } from '@/store/useGlobalStates';
-import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/router';
-import { useAccount } from 'wagmi';
-import { useQueryGetUser } from '../query';
-import { toast } from 'react-toastify';
-import { ethers } from 'ethers';
+import { CHAIN_ID, FactoryAbi, factoryAddress } from '@/contract';
 import { tokenAbi } from '@/contract2';
+import { useMutation } from '@tanstack/react-query';
+import { ethers } from 'ethers';
+import { toast } from 'react-toastify';
+import { useAccount } from 'wagmi';
 import { useEthersSigner } from '../ethers';
-import { CHAIN_ID } from '@/contract';
+import { useQueryGetUser } from '../query';
+import { useGlobalAmount } from "@/store/useGlobalStates";
 
 // purchaseWMP (0x74724ce8)
 export const useMutateCreateERC884ProPerty = (onSuccess) => {
   const { address } = useAccount();
-  const { FACTORY_CONTRACT, TOKEN_CONTRACT } = useGlobalStates((state) => state.contract);
+  const { TOKEN_CONTRACT } = useGlobalAmount((state) => state.contract);
+  const signer = useEthersSigner(CHAIN_ID);
 
   const mutationFn = async ({ name, symbols }) => {
-    const tx = await FACTORY_CONTRACT.createERC884(name, symbols);
+    const FACTORY_CONTRACT = new ethers.Contract(factoryAddress, FactoryAbi, signer);
+    console.log(FACTORY_CONTRACT)
+
+    const tx = await FACTORY_CONTRACT.createERC884(name, symbols, address);
     return tx?.wait();
   };
 
   return useMutation({
     mutationFn,
-    enabled: !!address && !!FACTORY_CONTRACT && !!TOKEN_CONTRACT,
+    enabled: !!address && !!TOKEN_CONTRACT,
     onError: (res) => {
       console.log({ res });
       toast.error(`Error: ${res?.message}`);
@@ -39,7 +42,7 @@ export const useMutateMint = (onSuccess) => {
   const { data: user } = useQueryGetUser();
   const signer = useEthersSigner(CHAIN_ID);
 
-  const { FACTORY_CONTRACT } = useGlobalStates((state) => state.contract);
+  const { FACTORY_CONTRACT } = useGlobalAmount((state) => state.contract);
 
   const mutationFn = async ({ tokenAddress, amount }) => {
     const tokenValues = ethers.utils.parseEther(`${amount}`);

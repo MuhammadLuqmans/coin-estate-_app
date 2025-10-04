@@ -3,10 +3,12 @@ import Input from '@/components/Input';
 import Previews from '@/components/PreviewSec';
 import CustomSelect from '@/components/Select';
 import { useMutateCreateERC884ProPerty } from '@/hooks/contract/mutateContract';
+import { useQueryGetOwnerOfFactoryContract } from '@/hooks/contract/query';
 import { useMutateCreateProperty, useMutateUploadFiles, useMutateUploadMultiFiles } from '@/hooks/mutation';
 import { useQueryGetUser } from '@/hooks/query';
 import Layout from '@/layout/admin';
 import { useYupValidationResolver } from '@/utils/helper';
+import { useAppKitNetwork } from '@reown/appkit/react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
@@ -67,6 +69,10 @@ export default function Home() {
 
   const resolver = useYupValidationResolver(validationSchemaProperty);
   const { address } = useAccount();
+  const { chainId } = useAppKitNetwork();
+  const { data: ownerOfFactoryContract } = useQueryGetOwnerOfFactoryContract();
+  console.log("🚀 ~ Home ~ chainId:", chainId)
+  console.log("🚀 ~ Home ~ ownerOfFactoryContract:", ownerOfFactoryContract)
   const { data: user } = useQueryGetUser();
   const [selected, setSelected] = useState();
   const {
@@ -108,9 +114,11 @@ export default function Home() {
     if (!address) {
       toast.error('Please connect your wallet');
     } else {
+      createNftProperty({ name: value?.name, symbols: value?.documents });
       if (mainImageData?.IpfsHash && multiFilesList?.length > 0 && selectedLocation) {
+        // onSuccess(value);
         setSelected(value);
-        createNftProperty({ name: value?.name, symbols: value?.documents });
+        // createNftProperty({ name: value?.name, symbols: value?.documents });
       } else {
         if (!selectedLocation) {
           toast.error('Please Select Location');
@@ -118,6 +126,7 @@ export default function Home() {
           toast.error('Please Add Images');
         }
       }
+
     }
   }
 

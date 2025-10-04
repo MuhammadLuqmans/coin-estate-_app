@@ -32,14 +32,22 @@ export default function GoogleMapAdmin({ setSelectedLocation, selectedLocation }
 
   // Handle user clicks and store the selected location
   const onMapClick = useCallback((event) => {
-    setSelectedLocation({
-      Latitude: event.latLng.lat(),
-      Longitude: event.latLng.lng(),
-    });
-  }, []);
+    if (event && event.latLng) {
+      const newLocation = {
+        Latitude: event.latLng.lat(),
+        Longitude: event.latLng.lng(),
+      };
+      setSelectedLocation(newLocation);
+    }
+  }, [setSelectedLocation]);
 
   if (loadError) return 'Error loading maps';
   if (!isLoaded) return 'Loading maps...';
+
+  // Convert selectedLocation format for map center and marker
+  const mapCenter = selectedLocation 
+    ? { lat: selectedLocation.Latitude, lng: selectedLocation.Longitude }
+    : defaultCenter;
 
   return (
     <div>
@@ -47,7 +55,7 @@ export default function GoogleMapAdmin({ setSelectedLocation, selectedLocation }
         id='map'
         mapContainerStyle={mapContainerStyle}
         zoom={7}
-        center={selectedLocation || defaultCenter}
+        center={mapCenter}
         options={options}
         onLoad={onMapLoad}
         onClick={onMapClick} // Listen for user clicks
