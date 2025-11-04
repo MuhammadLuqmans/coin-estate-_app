@@ -103,7 +103,7 @@ export default function Home() {
       subImages: multiFilesList || ['QmVVEGcA8S7k5ewTdEf33hXnecQYT3YRTyH828VrJ7YwZU'],
       email: user?.email || 'demo@gmail.com',
       address: address,
-      location: JSON.stringify(selectedLocation),
+      location: JSON.stringify(selectedLocation) || "{\"Latitude\":3.8424374053712307,\"Longitude\":-73.83745567048459}",
     };
     createProperty(defaultValues);
   };
@@ -113,8 +113,9 @@ export default function Home() {
     if (!address) {
       toast.error('Please connect your wallet');
     } else {
-      createNftProperty({ name: value?.name, symbols: value?.documents });
-      if (mainImageData?.IpfsHash && multiFilesList?.length > 0 && selectedLocation) {
+      if (mainImageData?.IpfsHash && multiFilesList?.length > 0 && selectedLocation && selectedLocation?.Latitude) {
+        createNftProperty({ name: value?.name, symbols: value?.documents });
+        console.log(value)
         // onSuccess(value);
         setSelected(value);
         // createNftProperty({ name: value?.name, symbols: value?.documents });
