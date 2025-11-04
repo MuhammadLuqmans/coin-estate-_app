@@ -44,14 +44,14 @@ export default async function handler(req, res) {
       const property = await prisma.property.findUnique({
         where: { id },
       });
-      const paymentList = await prisma.payment.findMany({ where: { status: "SECCESS" } });
+      const paymentList = await prisma.payment.findMany({ where: { status: 'SECCESS' } });
 
       const remaining = getPropertyPayments(id, paymentList);
 
       // const totalTokens = property?.tokenPrice;
       let remainingTokens = property?.totalInvestmentPrice - remaining?.remaining;
       remainingTokens = remainingTokens / property?.tokenPrice;
-      
+
       if (noTokens >= remainingTokens) {
         return res.status(400).json({ error: "We don't have enough tokens to sale" });
       }
