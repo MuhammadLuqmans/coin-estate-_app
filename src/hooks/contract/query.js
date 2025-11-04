@@ -9,7 +9,6 @@ export const useQueryGetNftsFromContract = () => {
   const { data: user } = useQueryGetUser()
   const queryKey = [queryKeys.getNftsFromContract, user?.email, address];
   const { FACTORY_CONTRACT, } = useGlobalStore((state) => state.contract);
-  console.log("🚀 ~ useQueryGetNftsFromContract ~ FACTORY_CONTRACT:", FACTORY_CONTRACT)
 
   const queryFn = async () => {
     const tx = await FACTORY_CONTRACT.getAllERC884Contracts()

@@ -36,7 +36,6 @@ export const useMutateCreateERC884ProPerty = (onSuccess) => {
 
 export const useMutateMint = (onSuccess) => {
   const { address } = useAccount();
-  const { data: user } = useQueryGetUser();
   const signer = useEthersSigner(CHAIN_ID);
 
   const {  contract } = useGlobalStore();
@@ -44,7 +43,6 @@ export const useMutateMint = (onSuccess) => {
 
   const mutationFn = async ({ tokenAddress, amount }) => {
     const tokenValues = ethers.utils.parseEther(`${amount}`);
-    console.log({tokenValues, tokenAddress, amount})
     const TOKEN_CONTRACT = new ethers.Contract(tokenAddress, tokenAbi, signer);
     const walletAddress = process.env.NEXT_PUBLIC_WALLET_PUBLIC_KEY
 
