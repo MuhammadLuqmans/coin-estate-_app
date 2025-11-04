@@ -87,7 +87,6 @@ export default function Home() {
     resolver,
   });
 
-  // const { mutate: approveChange, isPending: isLoadingApprove } = useMutateApprove()
 
   const { mutate: createProperty, isPending: isLoadingCreateNfts } = useMutateCreateProperty();
   const { mutate: mutateUploadMainFile, data: mainImageData, isPending: isLoadingMain } = useMutateUploadFiles();
