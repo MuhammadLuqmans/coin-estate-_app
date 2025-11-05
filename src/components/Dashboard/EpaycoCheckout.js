@@ -1,68 +1,116 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export default function EpaycoCheckout({ productData }) {
   const [isClientReady, setIsClientReady] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const checkIntervalRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     // Check if script already exists to avoid duplicates
-    if (document.querySelector('script[src="https://checkout.epayco.co/checkout.js"]')) {
+    const existingScript = document.querySelector('script[src="https://checkout.epayco.co/checkout.js"]');
+    
+    if (existingScript) {
       // Script already exists, check if ePayco is available
-      if (window.ePayco) {
+      if (window.ePayco && window.ePayco.checkout) {
         setIsClientReady(true);
-      } else {
-        // Wait a bit and check again
-        const checkInterval = setInterval(() => {
-          if (window.ePayco) {
-            setIsClientReady(true);
-            clearInterval(checkInterval);
-          }
-        }, 100);
-        
-        // Clear interval after 10 seconds to prevent infinite checking
-        setTimeout(() => clearInterval(checkInterval), 10000);
+        return;
       }
-      return;
+      
+      // Wait for ePayco to be available
+      checkIntervalRef.current = setInterval(() => {
+        if (window.ePayco && window.ePayco.checkout) {
+          setIsClientReady(true);
+          if (checkIntervalRef.current) {
+            clearInterval(checkIntervalRef.current);
+          }
+        }
+      }, 100);
+      
+      timeoutRef.current = setTimeout(() => {
+        if (checkIntervalRef.current) {
+          clearInterval(checkIntervalRef.current);
+        }
+        // Check if still not ready after timeout
+        if (!window.ePayco || !window.ePayco.checkout) {
+          setError('Failed to load ePayco SDK. Please refresh the page.');
+        }
+      }, 10000);
+      
+      return () => {
+        if (checkIntervalRef.current) {
+          clearInterval(checkIntervalRef.current);
+        }
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
     }
 
     // Add the ePayco script to the document
     const script = document.createElement('script');
     script.src = 'https://checkout.epayco.co/checkout.js';
     script.async = true;
+    script.onerror = () => {
+      setError('Failed to load ePayco checkout script. Please check your internet connection.');
+    };
+    
     script.onload = () => {
       // Script is loaded, but we need to make sure the ePayco object is initialized
-      const checkEpayco = setInterval(() => {
-        if (window.ePayco) {
+      checkIntervalRef.current = setInterval(() => {
+        if (window.ePayco && window.ePayco.checkout) {
           setIsClientReady(true);
-          clearInterval(checkEpayco);
           console.log('ePayco loaded successfully');
+          if (checkIntervalRef.current) {
+            clearInterval(checkIntervalRef.current);
+          }
         }
       }, 100);
       
       // Clear interval after 10 seconds to prevent infinite checking
-      setTimeout(() => clearInterval(checkEpayco), 10000);
+      timeoutRef.current = setTimeout(() => {
+        if (checkIntervalRef.current) {
+          clearInterval(checkIntervalRef.current);
+        }
+        // Check if still not ready after timeout
+        if (!window.ePayco || !window.ePayco.checkout) {
+          setError('ePayco SDK loaded but not initialized. Please try refreshing the page.');
+        }
+      }, 10000);
     };
     
     document.body.appendChild(script);
     
     return () => {
-      // Don't remove the script on unmount, as it might be used elsewhere
-      // Just clean up any intervals
-      // document.body.removeChild(script);
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   const handleCheckout = () => {
     if (!isClientReady) {
-      console.error('ePayco SDK not loaded yet');
+      setError('ePayco SDK not loaded yet. Please wait.');
       return;
     }
 
     if (!window.ePayco || !window.ePayco.checkout) {
-      console.error('ePayco checkout not available');
+      setError('ePayco checkout not available. Please refresh the page.');
       return;
     }
+
+    setLoading(true);
+    setError(null);
+
+    // Get API key from environment variable or use default test key
+    const apiKey = process.env.NEXT_PUBLIC_EPAYCO_PUBLIC_KEY || "cb8d42f8571e473134792daec1b738dc6997805f";
+    const isTestMode = process.env.NEXT_PUBLIC_EPAYCO_TEST_MODE !== 'false';
 
     // Default product data - can be overridden by props
     const data = {
@@ -81,13 +129,13 @@ export default function EpaycoCheckout({ productData }) {
       external: "false",
 
       // Optional attributes
-      extra1: productData?.extra1 || "extra1",
-      extra2: productData?.extra2 || "extra2",
-      extra3: productData?.extra3 || "extra3",
+      extra1: productData?.extra1 || "",
+      extra2: productData?.extra2 || "",
+      extra3: productData?.extra3 || "",
       
-      // Callback URLs
-      confirmation: productData?.confirmation || `${window.location.origin}/api/payment-confirmation`,
-      response: productData?.response || `${window.location.origin}/payment-response`,
+      // Callback URLs - use proper API routes
+      confirmation: productData?.confirmation || `${window.location.origin}/api/epayco/confirmation`,
+      response: productData?.response || `${window.location.origin}/dashboard/market-place/processing/payment-response`,
 
       // Customer attributes
       name_billing: productData?.name_billing || "Andres Perez",
@@ -98,16 +146,19 @@ export default function EpaycoCheckout({ productData }) {
     };
 
     try {
-      console.log('Configuring ePayco checkout...');
+      console.log('Configuring ePayco checkout with data:', data);
       const handler = window.ePayco.checkout.configure({
-        key: "cb8d42f8571e473134792daec1b738dc6997805f", // Hardcoded for reliability
-        test: true
+        key: apiKey,
+        test: isTestMode
       });
 
       console.log('Opening ePayco checkout...');
       handler.open(data);
+      setLoading(false);
     } catch (error) {
       console.error('Error opening ePayco checkout:', error);
+      setError(`Error opening checkout: ${error.message || 'Unknown error'}`);
+      setLoading(false);
     }
   };
 
@@ -115,14 +166,25 @@ export default function EpaycoCheckout({ productData }) {
     <div className="epayco-checkout">
       <button 
         onClick={handleCheckout}
-        disabled={!isClientReady}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        disabled={!isClientReady || loading}
+        className={`${
+          !isClientReady || loading
+            ? 'bg-gray-400 cursor-not-allowed' 
+            : 'bg-blue-500 hover:bg-blue-700'
+        } text-white font-bold py-2 px-4 rounded transition-colors`}
       >
-        {isClientReady ? 'Pay with ePayco' : 'Loading ePayco...'}
+        {loading ? 'Opening checkout...' : isClientReady ? 'Pay with ePayco' : 'Loading ePayco...'}
       </button>
-      {!isClientReady && (
+      
+      {error && (
+        <div className="mt-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+          {error}
+        </div>
+      )}
+      
+      {!isClientReady && !error && (
         <p className="text-xs text-gray-500 mt-2">
-          If loading takes too long, try refreshing the page.
+          Loading ePayco checkout...
         </p>
       )}
     </div>

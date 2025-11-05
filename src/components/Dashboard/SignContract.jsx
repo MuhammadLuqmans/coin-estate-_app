@@ -34,7 +34,7 @@ const rawContract = {
   acceptance_signature1: 'The system will log the acceptance, generating the final PDF document.',
 };
 
-export default function SignContract({ document, selectedNFT }) {
+export default function SignContract({ document, selectedNFT, handleNext }) {
   const { data: userData } = useQueryGetUser();
   const { data: userData2 } = useQueryGetActiveResults();
   console.log("🚀 ~ SignContract ~ userData:", userData2)
@@ -46,6 +46,11 @@ export default function SignContract({ document, selectedNFT }) {
   const parsedContract = Object.fromEntries(
     Object.entries(rawContract).map(([key, value]) => [key, replacePlaceholders(value, placeholderValues)]),
   );
+
+  const handleSignContract = () => {
+    console.log('Sign Contract');
+    handleNext();
+  };
 
   return (
     <div className='min-h-screen bg-black-800 p-10 mb-10 rounded-xl'>
@@ -138,7 +143,7 @@ export default function SignContract({ document, selectedNFT }) {
                 I have read and agree to the terms of this contract
               </label>
             </div>
-            <button className='bg-Yellow-100 text-black-800 px-8 py-3 rounded-lg font-bold hover:bg-Yellow-200 transition-colors duration-200'>
+            <button onClick={() => handleSignContract()} className='bg-Yellow-100 text-black-800 px-8 py-3 rounded-lg font-bold hover:bg-Yellow-200 transition-colors duration-200'>
               Sign Contract
             </button>
           </div>

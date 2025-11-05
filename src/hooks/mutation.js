@@ -507,6 +507,57 @@ export const useMutationInitiatePayment = (onSuccess) => {
   });
 };
 
+export const useMutationInitiateEpaycoPayment = () => {
+  const { data: user } = useQueryGetUser();
+
+  const mutationFn = async ({ id, amount }) => {
+    if (!id) {
+      throw new Error('Property ID is required');
+    }
+
+    if (!user?.token) {
+      throw new Error('User authentication required');
+    }
+
+    try {
+      const config = {
+        method: 'POST',
+        url: `${endPoint}/userInstants/create-epayco-payment`,
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        data: { id, amount: Number(amount) },
+      };
+
+      const response = await axios.request(config);
+
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`Error: ${response.status} - ${response.statusText || 'Unknown error'}`);
+      }
+
+      return response?.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || error.message || 'Failed to create Epayco payment');
+    }
+  };
+
+  return useMutation({
+    mutationFn,
+    onError: (error) => {
+      console.error('Epayco payment mutation error:', error);
+      const message = error.message || 'An unexpected error occurred.';
+      toast.error(`Failed to create payment: ${message}`);
+    },
+    onSuccess: (res) => {
+      console.log('Epayco payment mutation success:', res);
+      if (res?.message) {
+        toast.success(res.message);
+      }
+    },
+  });
+};
+
 export const useMutationMonthlyProcess = (onSuccess) => {
   const router = useRouter();
   const params = useParams();

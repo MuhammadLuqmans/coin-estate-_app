@@ -33,22 +33,24 @@ const CheckoutComponent = ({ id, handleModal, amount, selectedNFT }) => {
       clientSecret,
       redirect: 'if_required',
       confirmParams: {
-        return_url: `http://www.localhost:3000/payment-success?amount=${selectedNFT?.propertyPrice}`,
+        return_url: `${window.location.origin}/dashboard/market-place/${selectedNFT?.id || id}`,
       },
     });
     if (error) {
       // This point is only reached if there's an immediate error when
       // confirming the payment. Show the error to your customer (for example, payment details incomplete)
       setErrorMessage(error.message);
-    } else {
-      handleModal();
-      console.log('Success Complete');
-      fixUriDetails(initailPropert?.values);
-      // The payment UI automatically closes with a success animation.
-      // Your customer is redirected to your `return_url`.
+      setLoading(false);
+      return;
     }
 
+    // Payment successful - update backend and navigate
+    console.log('Payment Success - Updating backend...');
     setLoading(false);
+    fixUriDetails(initailPropert?.values);
+    // Call handleModal which will navigate to property details page
+    handleModal();
+    // The payment UI automatically closes with a success animation.
   };
 
   if (!clientSecret || !stripe || !elements) {

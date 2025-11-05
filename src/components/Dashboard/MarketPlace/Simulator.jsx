@@ -244,7 +244,7 @@ const initialBalance = years.reduce((acc, year, idx) => {
         </div>
 
         <div className='sm:text-20 font-medium font-ubuntu text-center mt-5 '>
-          <div class='flex gap-2 justify-start font-bold text-14 '>
+          <div className='flex gap-2 justify-start font-bold text-14 '>
             <input
               id='compoundCheck'
               type='checkbox'
