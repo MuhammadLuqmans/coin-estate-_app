@@ -6,9 +6,7 @@ import { endPoint, user_auth } from './queryContants';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryGetUser } from './query';
 import { usePropertyStates } from '@/store/useProduct';
-// import createBlog from '@/app/server/blog/action';
-// import getBlogsList from '@/app/server/blog/deleteBlog';
-// import createProperty from '@/app/api/v2/property/action';
+
 
 export const useMutateLocalUser = () => {
   const mutationFn = async (value) => {
@@ -42,7 +40,6 @@ export const useMutateLogout = () => {
 
 export const useMutateUploadFiles = () => {
   const mutationFn = async (file) => {
-    console.log('🚀 ~ mutationFn ~ file:', file);
     const formData = new FormData();
     formData.append('file', file);
 

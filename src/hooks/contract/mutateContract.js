@@ -11,8 +11,7 @@ import { useGlobalAmount } from "@/store/useGlobalStates";
 // purchaseWMP (0x74724ce8)
 export const useMutateCreateERC884ProPerty = (onSuccess) => {
   const { address } = useAccount();
-  const { TOKEN_CONTRACT } = useGlobalAmount((state) => state.contract);
-  const signer = useEthersSigner(CHAIN_ID);
+  const { FACTORY_CONTRACT, TOKEN_CONTRACT } = useGlobalStore((state) => state.contract);
 
   const mutationFn = async ({ name, symbols }) => {
     const FACTORY_CONTRACT = new ethers.Contract(factoryAddress, FactoryAbi, signer);
@@ -39,14 +38,13 @@ export const useMutateCreateERC884ProPerty = (onSuccess) => {
 
 export const useMutateMint = (onSuccess) => {
   const { address } = useAccount();
-  const { data: user } = useQueryGetUser();
   const signer = useEthersSigner(CHAIN_ID);
 
-  const { FACTORY_CONTRACT } = useGlobalAmount((state) => state.contract);
+  const {  contract } = useGlobalStore();
+  const { FACTORY_CONTRACT } = contract;
 
   const mutationFn = async ({ tokenAddress, amount }) => {
     const tokenValues = ethers.utils.parseEther(`${amount}`);
-    console.log({tokenValues, tokenAddress, amount})
     const TOKEN_CONTRACT = new ethers.Contract(tokenAddress, tokenAbi, signer);
     const walletAddress = process.env.NEXT_PUBLIC_WALLET_PUBLIC_KEY
 
