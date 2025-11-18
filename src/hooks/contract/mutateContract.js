@@ -6,12 +6,12 @@ import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
 import { useEthersSigner } from '../ethers';
 import { useQueryGetUser } from '../query';
-import { useGlobalAmount } from "@/store/useGlobalStates";
+import { useGlobalStore } from "@/store/useGlobalStates";
 
 // purchaseWMP (0x74724ce8)
 export const useMutateCreateERC884ProPerty = (onSuccess) => {
   const { address } = useAccount();
-  const { FACTORY_CONTRACT, TOKEN_CONTRACT } = useGlobalStore((state) => state.contract);
+  const signer = useEthersSigner(CHAIN_ID);
 
   const mutationFn = async ({ name, symbols }) => {
     const FACTORY_CONTRACT = new ethers.Contract(factoryAddress, FactoryAbi, signer);
@@ -23,7 +23,7 @@ export const useMutateCreateERC884ProPerty = (onSuccess) => {
 
   return useMutation({
     mutationFn,
-    enabled: !!address && !!TOKEN_CONTRACT,
+    enabled: !!address,
     onError: (res) => {
       console.log({ res });
       toast.error(`Error: ${res?.message}`);
@@ -40,9 +40,6 @@ export const useMutateMint = (onSuccess) => {
   const { address } = useAccount();
   const signer = useEthersSigner(CHAIN_ID);
 
-  const {  contract } = useGlobalStore();
-  const { FACTORY_CONTRACT } = contract;
-
   const mutationFn = async ({ tokenAddress, amount }) => {
     const tokenValues = ethers.utils.parseEther(`${amount}`);
     const TOKEN_CONTRACT = new ethers.Contract(tokenAddress, tokenAbi, signer);
@@ -54,7 +51,7 @@ export const useMutateMint = (onSuccess) => {
 
   return useMutation({
     mutationFn,
-    enabled: !!address && !!FACTORY_CONTRACT,
+    enabled: !!address,
     onError: (res) => {
       console.log({ res });
       toast.error(`Error: ${res?.reason}`);

@@ -1,4 +1,4 @@
-import { useGlobalAmount } from "@/store/useGlobalStates";
+import { useGlobalStore } from "@/store/useGlobalStates";
 import { useQueryGetUser } from "../query";
 import { queryKeys } from "../queryContants";
 import { useQuery } from "@tanstack/react-query";
@@ -34,7 +34,7 @@ export const useQueryGetOwnerOfFactoryContract = () => {
   const { address } = useAccount()
   const { data: user } = useQueryGetUser()
   const queryKey = [queryKeys.getOwnerOfFactoryContract, user?.email, address];
-  const { FACTORY_CONTRACT, } = useGlobalAmount((state) => state.contract);
+  const { FACTORY_CONTRACT, } = useGlobalStore((state) => state.contract);
   console.log("🚀 ~ useQueryGetOwnerOfFactoryContract ~ FACTORY_CONTRACT:", FACTORY_CONTRACT)
   const queryFn = async () => {
     const tx = await FACTORY_CONTRACT.owner()

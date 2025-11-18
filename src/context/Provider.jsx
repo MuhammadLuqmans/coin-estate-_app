@@ -8,10 +8,10 @@ import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
-export const projectId = process.env.NEXT_PUBLIC_PROJECT_ID;
+export const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || 'c27cea2ac282b1d3b59d8ff302544d24';
 
 if (!projectId) {
-  console.log('Project ID is not defined');
+  throw new Error('Project ID is not defined');
 }
 
 export const networks = [bscTestnet, polygonAmoy];

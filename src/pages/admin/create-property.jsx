@@ -113,19 +113,19 @@ export default function Home() {
     if (!address) {
       toast.error('Please connect your wallet');
     } else {
-      if (mainImageData?.IpfsHash && multiFilesList?.length > 0 && selectedLocation && selectedLocation?.Latitude) {
-        createNftProperty({ name: value?.name, symbols: value?.documents });
-        console.log(value)
-        // onSuccess(value);
+      createNftProperty({ name: value?.name, symbols: value?.documents });
         setSelected(value);
-        // createNftProperty({ name: value?.name, symbols: value?.documents });
-      } else {
-        if (!selectedLocation) {
-          toast.error('Please Select Location');
-        } else {
-          toast.error('Please Add Images');
-        }
-      }
+      // if (mainImageData?.IpfsHash && multiFilesList?.length > 0 && selectedLocation && selectedLocation?.Latitude) {
+      //   console.log(value)
+      //   // onSuccess(value);
+      //   // createNftProperty({ name: value?.name, symbols: value?.documents });
+      // } else {
+      //   if (!selectedLocation) {
+      //     toast.error('Please Select Location');
+      //   } else {
+      //     toast.error('Please Add Images');
+      //   }
+      // }
 
     }
   }
