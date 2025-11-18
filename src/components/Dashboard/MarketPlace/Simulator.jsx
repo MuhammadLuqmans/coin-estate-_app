@@ -1,7 +1,7 @@
 'use client';
 import InfoTooltip from '@/components/InfoIcon';
 import { useQueryGetTokenCopPrice } from '@/hooks/query';
-import { useGlobalAmount } from '@/store/useGlobalStates';
+import { useGlobalStore } from '@/store/useGlobalStates';
 import { useGlobalStates } from '@/store/useStore';
 import { formatNumberIndianStyle } from '@/utils/wagmiConfig';
 /* eslint-disable react/no-unescaped-entities */
@@ -33,8 +33,8 @@ const handleCalculate = (PropertyValueWithTime, value, tokenPrice, tokenCalculat
 };
 
 export default function Simulator({ nft }) {
-  const amount = useGlobalAmount(state => state.amount);
-  const setAmount = useGlobalAmount(state => state.setAmount);
+  const amount = useGlobalStore(state => state.amount);
+  const setAmount = useGlobalStore(state => state.setAmount);
   const [investmentYears, setInvestmentYears] = useState(1);
   const [reinvest, setReinvest] = useState(false);
   const [rentability, setRentability] = useState(0);
@@ -252,7 +252,7 @@ const initialBalance = years.reduce((acc, year, idx) => {
               onChange={() => setReinvest(!reinvest)}
               className='w-5 h-5 border-2 border-yellow bg-transparent rounded ring-1 focus:ring-0 focus:outline-none'
             />
-            <label for='compoundCheck'>¿Con interés compuesto?</label>{' '}
+            <label htmlFor='compoundCheck'>¿Con interés compuesto?</label>{' '}
             <InfoTooltip
               message={
                 'Al reinvertir tus ganancias mensuales, aprovechas el interés compuesto para maximizar tu rentabilidad a largo plazo, sin embargo ten en cuenta que las cifras mostradas son proyecciones, y debido a cambios en las condiciones de mercado y demás factores externos, podrían no reflejar la realidad'

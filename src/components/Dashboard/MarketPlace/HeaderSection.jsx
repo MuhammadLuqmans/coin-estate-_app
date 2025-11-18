@@ -7,7 +7,7 @@ import StyledImage from '@/components/StyedImage';
 import { useMutationInitiatePayment } from '@/hooks/mutation';
 import { useQueryGetTokenCopPrice } from '@/hooks/query';
 import { SourceUrl } from '@/hooks/queryContants';
-import { useGlobalAmount } from '@/store/useGlobalStates';
+import { useGlobalStore } from '@/store/useGlobalStates';
 import clsxm from '@/utils/clsxm';
 import { formatNumberIndianStyle } from '@/utils/wagmiConfig';
 import { useParams, usePathname } from 'next/navigation';
@@ -21,8 +21,8 @@ export default function HeaderSection({ selectedNFT, userData }) {
   const params = useParams();
   const [showModal, setShowModal] = useState(false);
   const { data: tokenPrice } = useQueryGetTokenCopPrice();
-  const amount = useGlobalAmount(state => state.amount);
-  const setAmount = useGlobalAmount(state => state.setAmount);
+  const amount = useGlobalStore(state => state.amount);
+  const setAmount = useGlobalStore(state => state.setAmount);
 
   const remaining = userData?.filter((item) => item.propertyId === params?.market_place)?.[0];
   const onSuccess = () => {

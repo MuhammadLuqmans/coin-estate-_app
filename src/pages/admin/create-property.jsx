@@ -71,8 +71,8 @@ export default function Home() {
   const { address } = useAccount();
   const { chainId } = useAppKitNetwork();
   const { data: ownerOfFactoryContract } = useQueryGetOwnerOfFactoryContract();
-  console.log("🚀 ~ Home ~ chainId:", chainId)
-  console.log("🚀 ~ Home ~ ownerOfFactoryContract:", ownerOfFactoryContract)
+  console.log('🚀 ~ Home ~ chainId:', chainId);
+  console.log('🚀 ~ Home ~ ownerOfFactoryContract:', ownerOfFactoryContract);
   const { data: user } = useQueryGetUser();
   const [selected, setSelected] = useState();
   const {
@@ -86,7 +86,6 @@ export default function Home() {
   } = useForm({
     resolver,
   });
-
 
   const { mutate: createProperty, isPending: isLoadingCreateNfts } = useMutateCreateProperty();
   const { mutate: mutateUploadMainFile, data: mainImageData, isPending: isLoadingMain } = useMutateUploadFiles();
@@ -103,7 +102,7 @@ export default function Home() {
       subImages: multiFilesList || ['QmVVEGcA8S7k5ewTdEf33hXnecQYT3YRTyH828VrJ7YwZU'],
       email: user?.email || 'demo@gmail.com',
       address: address,
-      location: JSON.stringify(selectedLocation) || "{\"Latitude\":3.8424374053712307,\"Longitude\":-73.83745567048459}",
+      location: JSON.stringify(selectedLocation) || '{"Latitude":3.8424374053712307,"Longitude":-73.83745567048459}',
     };
     createProperty(defaultValues);
   };
@@ -113,20 +112,19 @@ export default function Home() {
     if (!address) {
       toast.error('Please connect your wallet');
     } else {
-      createNftProperty({ name: value?.name, symbols: value?.documents });
+      if (mainImageData?.IpfsHash && multiFilesList?.length > 0 && selectedLocation && selectedLocation?.Latitude) {
+        createNftProperty({ name: value?.name, symbols: value?.documents });
         setSelected(value);
-      // if (mainImageData?.IpfsHash && multiFilesList?.length > 0 && selectedLocation && selectedLocation?.Latitude) {
-      //   console.log(value)
-      //   // onSuccess(value);
-      //   // createNftProperty({ name: value?.name, symbols: value?.documents });
-      // } else {
-      //   if (!selectedLocation) {
-      //     toast.error('Please Select Location');
-      //   } else {
-      //     toast.error('Please Add Images');
-      //   }
-      // }
-
+        console.log(value);
+        // onSuccess(value);
+        // createNftProperty({ name: value?.name, symbols: value?.documents });
+      } else {
+        if (!selectedLocation) {
+          toast.error('Please Select Location');
+        } else {
+          toast.error('Please Add Images');
+        }
+      }
     }
   }
 
@@ -182,7 +180,6 @@ export default function Home() {
                     register={register('listingPrice')}
                     className='py-2'
                   />
-                  
                 </div>
 
                 {/* ================================== main token Price ================================= */}
