@@ -1,8 +1,8 @@
 // import createProperty from '@/app/server/property/action';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { endPoint, user_auth } from './queryContants';
+import { endPoint, queryKeys, user_auth } from './queryContants';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryGetUser } from './query';
 import { usePropertyStates } from '@/store/useProduct';
@@ -412,8 +412,7 @@ export const useMutateMinteToken = () => {
 
 // ====================
 
-export const useMutatePDUpdate = () => {
-  const router = useRouter();
+export const useMutatePDUpdate = ({ onCompleted } = {}) => {
   const { data: user } = useQueryGetUser();
 
   const mutationFn = async (id) => {
@@ -441,10 +440,52 @@ export const useMutatePDUpdate = () => {
       console.error('Mutation error:', message);
       toast.error(`Failed to create property: ${message}`);
     },
-    onSuccess: (res) => {
+    onSuccess: (res, variables, context) => {
       console.log('Mutation success:', res);
       toast.success(`${res?.message}`);
-      router.back();
+      if (typeof onCompleted === 'function') {
+        onCompleted(res, variables, context);
+      }
+    },
+  });
+};
+
+export const useMutateCompleteKyc = ({ onCompleted } = {}) => {
+  const queryClient = useQueryClient();
+  const { data: user } = useQueryGetUser();
+
+  const mutationFn = async (payload = {}) => {
+    if (!user?.token) {
+      throw new Error('User authentication required.');
+    }
+
+    const config = {
+      method: 'POST',
+      url: `${endPoint}/kyc/complete`,
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${user?.token}`,
+      },
+      data: payload,
+    };
+
+    const response = await axios.request(config);
+    return response?.data;
+  };
+
+  return useMutation({
+    mutationFn,
+    onError: (error) => {
+      const message = error.response?.data?.error || error.message || 'Unable to update KYC status.';
+      console.error('KYC mutation error:', message);
+      toast.error(message);
+    },
+    onSuccess: (res, variables, context) => {
+      toast.success('KYC verification completed.');
+      queryClient.invalidateQueries({ queryKey: [queryKeys.getActiveResults] });
+      if (typeof onCompleted === 'function') {
+        onCompleted(res, variables, context);
+      }
     },
   });
 };

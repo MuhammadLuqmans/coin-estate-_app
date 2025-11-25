@@ -1,24 +1,14 @@
-import CheckoutPage from '@/components/Checkout';
 import KYCVerification from '@/components/Dashboard/KYCVerification';
 import MakePayment from '@/components/Dashboard/MakePayment';
 import SignContract from '@/components/Dashboard/SignContract';
 import SummeryCard from '@/components/Dashboard/SummeryCard';
-import TransferModal from '@/components/Dashboard/TransferModal';
-import * as config from '@/config';
 import { useMutateTransferFunds } from '@/hooks/mutation';
-import { useQueryGetDocument, useQueryGetProperty } from '@/hooks/query';
+import { useQueryGetDocument, useQueryGetProperty, useQueryGetActiveResults } from '@/hooks/query';
 import Layout from '@/layout/Vault-Dashboard';
 import { usePropertyStates } from '@/store/useProduct';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-
-// Make sure to call `loadStripe` outside of a component’s render to avoid
-// recreating the `Stripe` object on every render.
-const stripePromise = loadStripe(
-  'pk_test_51OqeOYGUpSubT3GbqdYLrzRmhRyFNcYLcKjYRt5gTnZplQo4K7QPIBkd7mEoLzdyKiA97YAIINAp6FljxNkfNTfR00WMYiS7Rt',
-);
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 
 const tabs = {
   checkout: 'sign-contract',
@@ -29,59 +19,96 @@ const tabs = {
 export default function Page() {
   const router = useRouter();
   const { data: getPropertyList } = useQueryGetProperty();
-  const { mutate: sendTokens } = useMutateTransferFunds();
+  const { data: activeUser } = useQueryGetActiveResults();
+  const { mutate: sendTokens, isPending: isTransferringTokens } = useMutateTransferFunds();
   const initailPropert = usePropertyStates((state) => state.initailPropert);
-
-  useEffect(() => {
-    if (initailPropert) {
-      setIsOpenModal(true);
-    }
-  }, [initailPropert]);
+  const [tokenTransferRequested, setTokenTransferRequested] = useState(false);
 
   const searchParams = useSearchParams();
   const paramsId = searchParams.get('id');
   const amount = searchParams.get('amount');
   const tokenAddress = searchParams.get('tokenAddress');
-  const tab = searchParams.get('tab');
+  const tab = searchParams.get('tab') || 'checkout';
 
-  const selectedNFT = getPropertyList?.filter((item) => item.id === paramsId)?.[0];
+  const selectedNFT = useMemo(
+    () => getPropertyList?.find((item) => item.id === paramsId),
+    [getPropertyList, paramsId],
+  );
   const { data: document } = useQueryGetDocument(paramsId);
-  console.log("🚀 ~ Page ~ document:", {document})
+  const isKycVerified = !!activeUser?.kycVerified;
+  const paymentId = initailPropert?.values;
 
-  const [isOpenModal, setIsOpenModal] = useState(false);
+  const getRouteForTab = useCallback(
+    (targetTab) =>
+      `/dashboard/market-place/processing/pay-by-card?tab=${targetTab}&id=${paramsId}&amount=${amount}&tokenAddress=${tokenAddress}`,
+    [amount, paramsId, tokenAddress],
+  );
 
-  const options = {
-    appearance: {
-      variables: {
-        colorIcon: '#6772e5',
-        fontFamily: 'Roboto, Open Sans, Segoe UI, sans-serif',
+  const handleNext = useCallback(() => {
+    const nextTab = tabs?.[tab];
+    if (!nextTab) return;
+    router.push(getRouteForTab(nextTab));
+  }, [getRouteForTab, router, tab]);
+
+  const navigateToKyc = useCallback(() => {
+    router.push(getRouteForTab('kyc-verification'));
+  }, [getRouteForTab, router]);
+
+  const sendPurchasedTokens = useCallback(() => {
+    if (tokenTransferRequested || isTransferringTokens) {
+      return;
+    }
+
+    if (!tokenAddress || !paymentId) {
+      toast.error('Missing payment reference. Please refresh the page and try again.');
+      return;
+    }
+
+    setTokenTransferRequested(true);
+    sendTokens(
+      { address: tokenAddress, amount: paymentId },
+      {
+        onSuccess: () => {
+          if (paramsId) {
+            router.push(`/dashboard/market-place/${paramsId}`);
+          } else {
+            router.push('/dashboard/market-place');
+          }
+        },
+        onError: () => {
+          setTokenTransferRequested(false);
+        },
       },
-    },
-    currency: config.CURRENCY,
-    mode: 'payment',
-    amount: Math.round(config.MAX_AMOUNT / config.AMOUNT_STEP),
-  };
-
-  const handleModal = () => {
-    console.log('success');
-    sendTokens({ address: tokenAddress, amount: initailPropert?.values });
-  };
-
-  const handleNext = () => {
-    router.push(
-      `/dashboard/market-place/processing/pay-by-card?tab=${tabs?.[tab]}&id=${paramsId}&amount=${amount}&tokenAddress=${tokenAddress}`,
     );
-  };
+  }, [isTransferringTokens, paramsId, paymentId, router, sendTokens, tokenAddress, tokenTransferRequested]);
+
+  const handlePaymentSuccess = useCallback(() => {
+    if (isKycVerified) {
+      sendPurchasedTokens();
+      return;
+    }
+    navigateToKyc();
+  }, [isKycVerified, navigateToKyc, sendPurchasedTokens]);
+
+  useEffect(() => {
+    if (tab === 'kyc-verification' && isKycVerified && paymentId && !tokenTransferRequested) {
+      sendPurchasedTokens();
+    }
+  }, [isKycVerified, paymentId, sendPurchasedTokens, tab, tokenTransferRequested]);
 
   return (
     <Layout>
       <div className='px-6 xl:pr-10'>
         {tab === 'checkout' && <SummeryCard selectedNFT={selectedNFT} amount={amount} handleNext={handleNext} />}
-        {tab === 'sign-contract' && <SignContract selectedNFT={selectedNFT} amount={amount} handleNext={handleNext} document={document} />}
-        {tab === 'make-payment' && <MakePayment selectedNFT={selectedNFT} amount={amount} handleNext={handleNext} />}
+        {tab === 'sign-contract' && (
+          <SignContract selectedNFT={selectedNFT} amount={amount} handleNext={handleNext} document={document} />
+        )}
+        {tab === 'make-payment' && (
+          <MakePayment selectedNFT={selectedNFT} amount={amount} handleNext={handleNext} onPaymentSuccess={handlePaymentSuccess} />
+        )}
         {tab === 'kyc-verification' && (
           <div className='glass p-4 rounded-lg'>
-          <KYCVerification selectedNFT={selectedNFT} amount={amount} handleNext={handleNext} />
+            <KYCVerification onKycSuccess={sendPurchasedTokens} />
           </div>
         )}
       </div>

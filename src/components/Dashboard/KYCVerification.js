@@ -4,6 +4,7 @@ import { useState } from 'react';
 import VerificationButton from './VerificationButton';
 import { endPoint } from '@/hooks/queryContants';
 import Input from '../Input';
+import { useMutateCompleteKyc } from '@/hooks/mutation';
 
 export const getConfig = (clientId, onFinishCaptureInformation) => ({
   branding: {
@@ -74,7 +75,7 @@ function checkVerificationStatus(clientId) {
   });
 }
 
-const KYCVerification = () => {
+const KYCVerification = ({ onKycSuccess }) => {
   // Steps: 'welcome' -> 'enterData' -> 'verificationPrompt' -> 'processing' -> 'result'
   const [step, setStep] = useState('welcome');
 
@@ -87,6 +88,7 @@ const KYCVerification = () => {
   const [error, setError] = useState('');
   const [tokenResponse, setTokenResponse] = useState(null);
   const [verificationOutcome, setVerificationOutcome] = useState(null);
+  const { mutateAsync: markKycComplete } = useMutateCompleteKyc();
 
   // 1) Welcome screen -> form
   const handleBegin = () => {
@@ -116,16 +118,28 @@ const KYCVerification = () => {
   // 3) Once the Web SDK finishes capturing data, it calls onComplete from config,
   //    which calls onFinishCaptureInformation -> we come here
   const handleVerificationComplete = async () => {
+    if (!tokenResponse?.clientId) {
+      setVerificationOutcome('fail');
+      setStep('result');
+      return;
+    }
+
     // We can do a final check or show a spinner
     setStep('processing');
 
     try {
       const status = await checkVerificationStatus(tokenResponse.clientId);
-      if (status.status === 'clear') {
-        setVerificationOutcome('success');
-      } else {
+      if (status.status !== 'clear') {
         setVerificationOutcome('fail');
+        setStep('result');
+        return;
       }
+
+      await markKycComplete({ clientId: tokenResponse.clientId });
+      if (typeof onKycSuccess === 'function') {
+        await onKycSuccess();
+      }
+      setVerificationOutcome('success');
     } catch (error) {
       setVerificationOutcome('fail');
     }

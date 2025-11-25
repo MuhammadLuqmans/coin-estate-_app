@@ -12,7 +12,7 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_51OqeOYGUpSubT3GbqdYLrzRmhRyFNcYLcKjYRt5gTnZplQo4K7QPIBkd7mEoLzdyKiA97YAIINAp6FljxNkfNTfR00WMYiS7Rt',
 );
 
-export default function MakePayment({ selectedNFT, amount, handleNext }) {
+export default function MakePayment({ selectedNFT, amount, handleNext, onPaymentSuccess }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const initailPropert = usePropertyStates((state) => state.initailPropert);
@@ -40,14 +40,20 @@ export default function MakePayment({ selectedNFT, amount, handleNext }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNFT?.id, amount]);
 
-  const handleModal = () => {
-    // Payment successful, navigate to property details page
-    if (selectedNFT?.id) {
-      router.push(`/dashboard/market-place/${selectedNFT.id}`);
-    } else if (handleNext) {
-      // Fallback to next step if property ID is not available
+  const handleFallbackNavigation = () => {
+    if (handleNext) {
       handleNext();
+    } else if (selectedNFT?.id) {
+      router.push(`/dashboard/market-place/${selectedNFT.id}`);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    if (typeof onPaymentSuccess === 'function') {
+      onPaymentSuccess();
+      return;
+    }
+    handleFallbackNavigation();
   };
 
   // Calculate payment amount
@@ -122,12 +128,7 @@ export default function MakePayment({ selectedNFT, amount, handleNext }) {
         </div>
 
         <Elements stripe={stripePromise} options={options}>
-          <CheckoutComponent
-            id={selectedNFT?.id}
-            handleModal={handleModal}
-            amount={paymentAmount}
-            selectedNFT={selectedNFT}
-          />
+          <CheckoutComponent id={selectedNFT?.id} amount={paymentAmount} selectedNFT={selectedNFT} onPaymentSuccess={handlePaymentSuccess} />
         </Elements>
       </div>
 

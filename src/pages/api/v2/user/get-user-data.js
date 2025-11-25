@@ -39,6 +39,8 @@ export default async function handler(req, res) {
           email: true,
           createdAt: true,
           userTokens: true,
+          kycVerified: true,
+          kycVerifiedAt: true,
         },
       });
       const properties = await prisma.property.findMany();

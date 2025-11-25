@@ -3,7 +3,7 @@ import { usePropertyStates } from '@/store/useProduct';
 import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { useState } from 'react';
 
-const CheckoutComponent = ({ id, handleModal, amount, selectedNFT }) => {
+const CheckoutComponent = ({ id, amount, selectedNFT, onPaymentSuccess }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState();
@@ -11,7 +11,12 @@ const CheckoutComponent = ({ id, handleModal, amount, selectedNFT }) => {
   const initailPropert = usePropertyStates((state) => state.initailPropert);
   const clientSecret = initailPropert?.init;
 
-  const { mutate: fixUriDetails } = useMutatePDUpdate();
+  const { mutate: fixUriDetails } = useMutatePDUpdate({
+    onCompleted: () => {
+      setLoading(false);
+      onPaymentSuccess?.();
+    },
+  });
 
   const handleSubmit = async (event) => {
     setLoading(true);
@@ -44,13 +49,18 @@ const CheckoutComponent = ({ id, handleModal, amount, selectedNFT }) => {
       return;
     }
 
-    // Payment successful - update backend and navigate
-    console.log('Payment Success - Updating backend...');
-    setLoading(false);
-    fixUriDetails(initailPropert?.values);
-    // Call handleModal which will navigate to property details page
-    handleModal();
-    // The payment UI automatically closes with a success animation.
+    if (!initailPropert?.values) {
+      setLoading(false);
+      setErrorMessage('Missing payment reference. Please refresh the page and try again.');
+      return;
+    }
+
+    // Payment successful - update backend and bubble up
+    fixUriDetails(initailPropert?.values, {
+      onError: () => {
+        setLoading(false);
+      },
+    });
   };
 
   if (!clientSecret || !stripe || !elements) {
