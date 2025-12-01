@@ -1,9 +1,8 @@
 // import complycube from '@/utils/complycube';
 // import { runMiddleware } from '@/utils/cors';
 
-import complycube from "@/libs/complycube";
-import cors, { runMiddleware } from "@/utils/cors";
-
+import complycube from '@/libs/complycube';
+import cors, { runMiddleware } from '@/utils/cors';
 
 // Initialize ComplyCube API with the API key from the environment variables
 
@@ -37,7 +36,7 @@ export default async function handler(req, res) {
 
       // Generate an SDK token for the client
       const token = await complycube.token.generate(client.id, {
-        referrer: process.env.REFERRER_WEBSITE || 'https://coin-estate.vercel.app/*'
+        referrer: process.env.REFERRER_WEBSITE || 'https://coin-estate.vercel.app/*',
       });
       // console.log("🚀 ~ handler ~ token:", token)
 
@@ -57,4 +56,4 @@ export default async function handler(req, res) {
 
   // Return 405 for other methods
   return res.status(405).json({ error: 'Method not allowed' });
-} 
+}
