@@ -9,4 +9,4 @@ export const factoryAddress = '0xF1eeB49594be2B153AC34Db8Cd9B3dAC4087a65d';
 export const tokenAbi = Token;
 export const FactoryAbi = FactoryContract;
 
-export const CHAIN_ID = 97
+export const CHAIN_ID = 97;
