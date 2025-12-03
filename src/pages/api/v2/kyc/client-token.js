@@ -36,7 +36,8 @@ export default async function handler(req, res) {
 
       // Generate an SDK token for the client
       const token = await complycube.token.generate(client.id, {
-        referrer: process.env.REFERRER_WEBSITE || 'https://coin-estate.vercel.app/*',
+        referrer: 'https://coin-estate-app-ten.vercel.app/*',
+        // referrer: 'http://localhost:3000/*',
       });
       // console.log("🚀 ~ handler ~ token:", token)
 

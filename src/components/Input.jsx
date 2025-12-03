@@ -12,6 +12,8 @@ export default function Input({
   min,
   Label,
   placeholder,
+  fullWidth,  // Destructure to prevent passing to DOM
+  margin,     // Destructure to prevent passing to DOM
   ...others
 }) {
   return (

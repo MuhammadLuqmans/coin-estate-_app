@@ -1,4 +1,4 @@
-const { tokenAbi } = require('@/contract');
+const { tokenAbi, tokenAddress: defaultTokenAddress } = require('@/contract');
 const { ethers } = require('ethers');
 
 import prisma from '@/libs/prisma';
@@ -7,41 +7,57 @@ import jwt from 'jsonwebtoken';
 
 async function transferTokens(recipient, CONTRACT_ADDRESS, amount) {
   try {
-    // Load environment variables
-    // const { PRIVATE_KEY, RPC_URL, CONTRACT_ADDRESS } = process.env;
-
-    // const RPC_URL = 'https://polygon-amoy.g.alchemy.com/v2/352r-cLBBgiYpchoxYaA5lNvID3iEgGT';
     const RPC_URL = 'https://bnb-testnet.g.alchemy.com/v2/gjOpWVwh7CDyPa2g52cxcCeudpPuoAoG';
     const PRIVATE_KEY = process.env.PRIVATE_KEY;
+    const WALLET_ADDRESS = process.env.WALLET_ADDRESS;
 
-    if (!PRIVATE_KEY || !RPC_URL || !CONTRACT_ADDRESS) {
-      throw new Error('Missing values');
+    if (!PRIVATE_KEY) {
+      throw new Error('Missing PRIVATE_KEY environment variable');
     }
-    // Set up the provider
-    const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    if (!WALLET_ADDRESS) {
+      throw new Error('Missing WALLET_ADDRESS environment variable');
+    }
+
+    // Use default token address if CONTRACT_ADDRESS is invalid
+    let contractAddr = CONTRACT_ADDRESS;
+    if (!contractAddr || !ethers.utils.isAddress(contractAddr)) {
+      console.log(`Invalid CONTRACT_ADDRESS provided: "${contractAddr}", using default: ${defaultTokenAddress}`);
+      contractAddr = defaultTokenAddress;
+    }
+
+    if (!ethers.utils.isAddress(recipient)) {
+      throw new Error('Recipient is not a valid Ethereum address');
+    }
+
+    if (!ethers.utils.isAddress(WALLET_ADDRESS)) {
+      throw new Error('WALLET_ADDRESS is not a valid Ethereum address');
+    }
+
+    // Set up the provider with explicit network config to avoid ENS lookups
+    const network = {
+      chainId: 97,
+      name: 'bnbt',
+    };
+    const provider = new ethers.providers.JsonRpcProvider(RPC_URL, network);
 
     // Create a wallet instance
     const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
     // Connect to the contract
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, tokenAbi, wallet);
-    console.log("🚀 ~ transferTokens ~ contract:", contract)
+    const contract = new ethers.Contract(contractAddr, tokenAbi, wallet);
+    console.log('🚀 ~ transferTokens ~ using contract address:', contractAddr);
 
-    // Convert amount to the correct format (if needed, e.g., decimals)
-    const decimals = 18; // Replace with your token's decimals
+    // Convert amount to the correct format
     const formattedAmount = ethers.utils.parseEther(`${amount}`);
 
-    // Call the `transfer` function
-    const tx = await contract.adminTransfer(process.env.WALLET_ADDRESS, recipient, formattedAmount);
-    console.log("🚀 ~ transferTokens ~ tx:", tx)
-    // if (tx) {
-    //   return res.status(401).json({ error: tx });
-    // }
+    // Call the `adminTransfer` function
+    const tx = await contract.adminTransfer(WALLET_ADDRESS, recipient, formattedAmount);
+    console.log('🚀 ~ transferTokens ~ tx:', tx.hash);
 
     // Wait for transaction to be mined
     const receipt = await tx.wait();
 
-    console.log('Transfer successful:', { receipt });
+    console.log('Transfer successful:', receipt.transactionHash);
     return {
       success: true,
       transactionHash: receipt.transactionHash,
@@ -81,19 +97,30 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Unauthorized. Invalid token.' });
       }
       const { amount: paymentId, tokenAddress } = req.body;
+      
+      if (!paymentId) {
+        return res.status(400).json({ error: 'Payment ID is required.' });
+      }
+
       const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
-      // console.log({ paymentId, tokenAddress });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found.' });
+      }
+
       const paymentInfo = await prisma.payment.findUnique({ where: { id: paymentId } });
+      if (!paymentInfo) {
+        return res.status(404).json({ error: 'Payment not found.' });
+      }
+
       const amount = paymentInfo?.numberOfTokens;
-      // console.log({ amount });
       const userAddress = decrypt(user.destinationValues);
-      // console.log({ amount, tokenAddress,userAddress, decoded });
+      
+      console.log('Transfer request:', { paymentId, tokenAddress, amount, userAddress: userAddress?.substring(0, 10) + '...' });
+
       // Validate the amount is positive
       if (isNaN(amount) || parseFloat(amount) <= 0) {
         return res.status(400).json({ error: 'Invalid amount. Must be a positive number.' });
       }
-
-      // Alchemy RPC URL (Ethereum Mainnet)
 
       const receipt = await transferTokens(userAddress, tokenAddress, amount);
 
