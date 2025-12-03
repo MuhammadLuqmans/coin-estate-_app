@@ -4,48 +4,8 @@ import VerificationButton from './VerificationButton';
 import { endPoint } from '@/hooks/queryContants';
 import Input from '../Input';
 import { useMutateCompleteKyc } from '@/hooks/mutation';
+import axios from 'axios';
 
-export const getConfig = (clientId, onFinishCaptureInformation) => ({
-  branding: {
-    // Customize the modal colors, fonts, or logo
-    primaryColor: '#1565c0',
-    buttonTextColor: '#ffffff',
-    fontFamily: 'Arial, sans-serif',
-    logo: {
-      lightLogoUrl: 'https://static.vecteezy.com/system/resources/thumbnails/000/609/739/small/3-19.jpg',
-    },
-  },
-
-  stages: [
-    {
-      type: 'documentCapture',
-      options: {
-        documentTypes: {
-          passport: true,
-          driving_license: true,
-          national_identity_div: true,
-        },
-      },
-    },
-    {
-      type: 'faceCapture',
-      options: {
-        mode: 'photo',
-      },
-    },
-    {
-      type: 'faceCapture',
-      options: {
-        mode: 'video',
-      },
-    },
-  ],
-  onComplete: async (data) => {
-    // data contains e.g. data.documentCapture.documentId, data.faceCapture.livePhotoId
-    console.log('SDK capture complete:', data);
-    onFinishCaptureInformation();
-  },
-});
 
 // Mock check to see if results are cleared (simulating a final pass/fail status)
 function checkVerificationStatus(clientId) {
@@ -82,12 +42,14 @@ const KYCVerification = ({ onKycSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    console.log('🚀 ~ handleFormSubmit ~ formData:', formData)
 
     try {
       const res = await axios.post(`${endPoint}/kyc/client-token`, {
         type: 'person',
         ...formData,
       });
+      console.log('🚀 ~ handleFormSubmit ~ res:', res)
       setTokenResponse(res.data); // { token, clientId }
       setStep('verificationPrompt');
     } catch (err) {
@@ -247,12 +209,25 @@ const KYCVerification = ({ onKycSuccess }) => {
             <p className='text-32 font-bold text-center font-ubuntu'>
               Identity Verification
             </p>
-            <p className='mb-5 text-center'>Please complete the required checks. We’ll confirm your status once the pop-up closes.</p>
+            <p className='mb-5 text-center'>Please complete the required checks. We'll confirm your status once the pop-up closes.</p>
             <VerificationButton
               token={tokenResponse.token}
-              clientId={tokenResponse.clientId}
-              // IMPORTANT: pass the dynamic config with your onComplete logic
-              config={getConfig(tokenResponse.clientId, () => handleVerificationComplete())}
+              onComplete={(data) => {
+                console.log('SDK capture complete:', data);
+                handleVerificationComplete();
+              }}
+              onError={({ type, message }) => {
+                console.error('Verification error:', type, message);
+                setError(message || 'Verification failed');
+              }}
+              onTokenExpired={async () => {
+                // Optionally refresh the token here
+                setError('Session expired. Please try again.');
+                setStep('enterData');
+              }}
+              onModalClose={() => {
+                console.log('User closed the verification modal');
+              }}
               label='Start verification'
             />
           </div>

@@ -65,21 +65,21 @@ export default function Page() {
     }
 
     setTokenTransferRequested(true);
-    sendTokens(
-      { address: tokenAddress, amount: paymentId },
-      {
-        onSuccess: () => {
-          if (paramsId) {
-            router.push(`/dashboard/market-place/${paramsId}`);
-          } else {
-            router.push('/dashboard/market-place');
-          }
-        },
-        onError: () => {
-          setTokenTransferRequested(false);
-        },
-      },
-    );
+    // sendTokens(
+    //   { address: tokenAddress, amount: paymentId },
+    //   {
+    //     onSuccess: () => {
+    //       if (paramsId) {
+    //         router.push(`/dashboard/market-place/${paramsId}`);
+    //       } else {
+    //         router.push('/dashboard/market-place');
+    //       }
+    //     },
+    //     onError: () => {
+    //       setTokenTransferRequested(false);
+    //     },
+    //   },
+    // );
   }, [isTransferringTokens, paramsId, paymentId, router, sendTokens, tokenAddress, tokenTransferRequested]);
 
   const handlePaymentSuccess = useCallback(() => {
