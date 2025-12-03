@@ -4,7 +4,6 @@
 import complycube from '@/libs/complycube';
 import cors, { runMiddleware } from '@/utils/cors';
 
-// Initialize ComplyCube API with the API key from the environment variables
 
 export default async function handler(req, res) {
   // Run the middleware

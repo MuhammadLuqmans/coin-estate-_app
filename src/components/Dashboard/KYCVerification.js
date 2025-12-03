@@ -1,5 +1,4 @@
 /* eslint-disable react/no-unescaped-entities */
-import axios from 'axios';
 import { useState } from 'react';
 import VerificationButton from './VerificationButton';
 import { endPoint } from '@/hooks/queryContants';
@@ -44,24 +43,7 @@ export const getConfig = (clientId, onFinishCaptureInformation) => ({
   onComplete: async (data) => {
     // data contains e.g. data.documentCapture.documentId, data.faceCapture.livePhotoId
     console.log('SDK capture complete:', data);
-
-    try {
-      // Now call your "staggered-screening" endpoint
-      // e.g., it might first do a standard_screening_check, then extensive, then enable monitoring.
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/staggered-screening`, {
-        clientId,
-        documentId: data.documentCapture?.documentId,
-        livePhotoId: data.faceCapture?.livePhotoId,
-      });
-      console.log('Staggered Screening Result:', response.data);
-
-      // Finally, tell the parent component we’re done
-      onFinishCaptureInformation();
-    } catch (error) {
-      console.error('Error in onComplete:', error);
-      // Optionally handle UI feedback if checks fail
-      onFinishCaptureInformation();
-    }
+    onFinishCaptureInformation();
   },
 });
 
