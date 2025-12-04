@@ -73,11 +73,11 @@ export default async function handler(req, res) {
 
       const userAddress = decrypt(user?.destinationValues);
       const tokenAddress = tokenMint?.tokenAddress;
-     const receipt = await transferTokens(userAddress, tokenAddress, payment?.numberOfTokens);
-      console.log("🚀 ~ handler ~ receipt:", receipt)
-      if(receipt?.error) {
+      const receipt = await transferTokens(userAddress, tokenAddress, payment?.numberOfTokens);
+      console.log('🚀 ~ handler ~ receipt:', receipt);
+      if (receipt?.error) {
         return res.status(400).json({ error: receipt?.error });
-      }else{
+      } else {
         kycVerification = { status: true, kyc: user?.kycVerified, message: 'KYC verified.' };
         await prisma.transaction.create({
           data: {
@@ -91,15 +91,14 @@ export default async function handler(req, res) {
           },
         });
       }
-      
     }
     // Update payment status
-       const updatedPayment = await prisma.payment.update({
-        where: { id: id },
-        data: {
-          status: 'SECCESS',
-        },
-      });
+    const updatedPayment = await prisma.payment.update({
+      where: { id: id },
+      data: {
+        status: 'SECCESS',
+      },
+    });
 
     const updatedUser = await prisma.user.update({
       where: { id: decoded.userId },
