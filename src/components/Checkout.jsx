@@ -60,6 +60,9 @@ const CheckoutComponent = ({ id, amount, selectedNFT, onPaymentSuccess }) => {
       onError: () => {
         setLoading(false);
       },
+      onSuccess: (res) => {
+        console.log("🚀 ~ handleSubmit ~ onSuccess: res", res)
+      },
     });
   };
 

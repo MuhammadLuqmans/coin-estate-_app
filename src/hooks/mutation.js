@@ -3,9 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { endPoint, queryKeys, user_auth } from './queryContants';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQueryGetUser } from './query';
 import { usePropertyStates } from '@/store/useProduct';
+import { useCallback } from 'react';
 
 
 export const useMutateLocalUser = () => {
@@ -414,6 +415,16 @@ export const useMutateMinteToken = () => {
 
 export const useMutatePDUpdate = ({ onCompleted } = {}) => {
   const { data: user } = useQueryGetUser();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const paramsId = searchParams.get('id');
+  const amount = searchParams.get('amount');
+  const tokenAddress = searchParams.get('tokenAddress');
+  const getRouteForTab = useCallback(
+    (targetTab) =>
+      `/dashboard/market-place/processing/pay-by-card?tab=${targetTab}&id=${paramsId}&amount=${amount}&tokenAddress=${tokenAddress}`,
+    [amount, paramsId, tokenAddress],
+  );
 
   const mutationFn = async (id) => {
     if (!id) throw new Error('ID is required for creation.');
@@ -442,7 +453,13 @@ export const useMutatePDUpdate = ({ onCompleted } = {}) => {
     },
     onSuccess: (res, variables, context) => {
       console.log('Mutation success:', res);
+      if (!res?.kycVerification.kyc) {
+        router.push(getRouteForTab('kyc-verification'));
+      } else {
+        router.push(`/dashboard/market-place/${paramsId}`);
+      }
       toast.success(`${res?.message}`);
+
       if (typeof onCompleted === 'function') {
         onCompleted(res, variables, context);
       }

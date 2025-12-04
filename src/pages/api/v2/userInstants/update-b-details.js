@@ -1,5 +1,16 @@
 import prisma from '@/libs/prisma';
+import { transferTokens } from '@/utils/tokens-T';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+const ENCRYPTION_KEY = crypto.createHash('sha256').update(process.env.FORGOT_PASSWORD_KEY).digest(); // Derive 32-byte key
+
+function decrypt(text) {
+  const [iv, encrypted] = text.split(':');
+  const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, Buffer.from(iv, 'hex'));
+  let decrypted = decipher.update(Buffer.from(encrypted, 'hex'));
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  return decrypted.toString();
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -51,29 +62,48 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Payment is already complete.' });
     }
 
-    // Update payment status
-    const updatedPayment = await prisma.payment.update({
-      where: { id: id },
-      data: {
-        userId: payment.userId,
-        amount: payment.amount,
-        currency: payment.currency,
-        paymentIntentId: payment.paymentIntentId,
-        status: 'SECCESS',
-        propertyId: payment.propertyId,
-        numberOfTokens: payment?.noTokens,
-        tokenPrice: payment?.tokenPrice,
-      },
-    });
+    // get user data to check KYC verification
 
+    let kycVerification = null;
+    if (!user?.kycVerified) {
+      kycVerification = { status: false, kyc: user?.kycVerified, message: 'KYC verification is required.' };
+    } else {
+      const tokenMintList = await prisma.minted.findMany();
+      const tokenMint = tokenMintList?.find((token) => token?.tokenId === id);
+
+      const userAddress = decrypt(user?.destinationValues);
+      const tokenAddress = tokenMint?.tokenAddress;
+     const receipt = await transferTokens(userAddress, tokenAddress, payment?.numberOfTokens);
+      console.log("🚀 ~ handler ~ receipt:", receipt)
+      if(receipt?.error) {
+        return res.status(400).json({ error: receipt?.error });
+      }else{
+        kycVerification = { status: true, kyc: user?.kycVerified, message: 'KYC verified.' };
+        await prisma.transaction.create({
+          data: {
+            userId: decoded.userId,
+            sender: process.env.WALLET_ADDRESS,
+            recipient: userAddress,
+            amount: `${payment?.numberOfTokens}`,
+            tokenPrice: payment?.tokenPrice,
+            transactionHash: receipt.transactionHash,
+            status: 'SUCCESS',
+          },
+        });
+      }
+      
+    }
+    // Update payment status
+       const updatedPayment = await prisma.payment.update({
+        where: { id: id },
+        data: {
+          status: 'SECCESS',
+        },
+      });
 
     const updatedUser = await prisma.user.update({
       where: { id: decoded.userId },
       data: {
-        email: user?.email,
-        listHash: user?.listHash,
-        destinationValues: user?.destinationValues,
-        destinationCalculation: user?.destinationCalculation,
         userTokens: [...user?.userTokens, payment?.propertyId],
       },
     });
@@ -83,6 +113,7 @@ export default async function handler(req, res) {
       message: 'Transaction Complete updated successfully.',
       payment: updatedPayment,
       user: updatedUser,
+      kycVerification: kycVerification,
     });
   } catch (error) {
     console.error('Error updating payment status:', error);

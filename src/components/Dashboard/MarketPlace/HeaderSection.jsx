@@ -17,6 +17,7 @@ import { toast } from 'react-toastify';
 import InvestmentUpgradeModal from '../InvestmentUpgradeModal';
 
 export default function HeaderSection({ selectedNFT, userData }) {
+  console.log({selectedNFT})
   const router = useRouter();
   const params = useParams();
   const [showModal, setShowModal] = useState(false);
@@ -27,12 +28,11 @@ export default function HeaderSection({ selectedNFT, userData }) {
   const remaining = userData?.filter((item) => item.propertyId === params?.market_place)?.[0];
   const onSuccess = () => {
     router.push(
-      `/dashboard/market-place/processing/pay-by-card?tab=checkout&id=${selectedNFT?.id}&amount=${amount}&tokenAddress=${selectedNFT?.mint?.tokenAddress}`,
+      `/dashboard/market-place/processing/pay-by-card?tab=checkout&id=${selectedNFT?.id}&amount=${amount}&tokenAddress=${selectedNFT?.address}`,
     );
   };
   const { mutate: createIntend, isPending: isLoading } = useMutationInitiatePayment(onSuccess);
 
-  const [isSelected, setIsSelected] = useState(false);
   const location = usePathname();
   const paths = {
     '/admin/market-place': 'MarketPlace',

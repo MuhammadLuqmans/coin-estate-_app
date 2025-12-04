@@ -105,9 +105,7 @@ const RealEstateProjection = ({ nft }) => {
   };
 
   // Debug logging
-  console.log('Simulator data:', simulator);
-  console.log('Projects on interest:', simulator?.projectsOnInterest);
-  console.log('Interest compounded:', simulator?.interestCompounded);
+
 
   if(!simulator?.projectsOnInterest || !simulator?.interestCompounded){
     return (

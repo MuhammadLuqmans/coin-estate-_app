@@ -14,13 +14,13 @@ export default function Page() {
   const handleFilter = (value) => {
     const filteredProperty =
       value !== 'all'
-        ? getPropertyList.filter((item) => item.propertyType.toLowerCase() === value?.toLowerCase())
+        ? getPropertyList?.filter((item) => item?.propertyType?.toLowerCase() === value?.toLowerCase())
         : getPropertyList;
     setFiltered(filteredProperty);
   };
 
   const handleSearch = (value) => {
-    const searched = getPropertyList.filter((item) => item.name.toLowerCase().includes(value.toLowerCase()));
+    const searched = getPropertyList?.filter((item) => item?.name?.toLowerCase().includes(value?.toLowerCase()));
     setFiltered(searched);
   };
 
@@ -39,7 +39,7 @@ export default function Page() {
             sortByMostRecent={(title) => {
               console.log({ title });
               if (title === 'Más recientes') {
-                setFiltered(getPropertyList?.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+                setFiltered(getPropertyList?.sort((a, b) => new Date(b?.createdAt) - new Date(a?.createdAt)));
               } else {
                 setFiltered(getPropertyList);
               }

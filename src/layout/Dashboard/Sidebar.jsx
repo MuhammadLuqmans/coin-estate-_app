@@ -8,9 +8,7 @@ import { Sidebar_Data } from '@/_mock/data';
 
 export default function Sidebar({ isOpen }) {
   const [isActive, setIsActive] = useState();
-  const [isDark, setIsDark] = useState(true);
   const location = usePathname();
-  console.log({location})
 
   return (
     <div
